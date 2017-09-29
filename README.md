@@ -5,16 +5,13 @@ Bash one liners and functions I use.
 
 There are many one liners for finding large files on linux systems this is one I put together a while back and use all the time.
 
-<pre>
-<code>
+```bash
 function filefinder(){
   (find $(pwd) -type f -size +25M -print0 2> /dev/null | xargs -0 ls -lhsS) | column -t | cut -d ' ' -f 2- | sed -e 's/^[ \t]*//'
 }
-</code>
-</pre>
+```
 
-
-Example:
+**Example:**
 <pre>
 [root@cj8dcl102 var]# (find $(pwd) -type f -size +25M -print0 2> /dev/null | xargs -0 ls -lhsS) | column -t | cut -d ' ' -f 2- | sed -e 's/^[ \t]*//'
 -rw-------   1  root  root  401M  Sep  18  03:41  /var/log/messages-20170918
@@ -39,15 +36,14 @@ Example:
 
 Used to fix display of df results and order filesystems from most used to least.
 
-<pre><code>
+```bash
 function fsuse(){
 df -hP | column -t | grep -v ^none | ( read header ; echo "$header" | sed 's/Mounted.*on/Mounted_on/g' ; sort -rn -k 5)
 }
-</code></pre>
+```
 
 
-
-Exmaple:
+**Exmaple:**
 <pre>
 [kaddyman@cj8dcl102 ~]$ df -hP | column -t | grep -v ^none | ( read header ; echo "$header" | sed 's/Mounted.*on/Mounted_on/g' ; sort -rn -k 5)
 Filesystem                      Size  Used  Avail  Use%  Mounted_on

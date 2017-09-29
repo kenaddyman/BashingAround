@@ -33,6 +33,8 @@ Example:
 -rw-------   1  root  root  31M   Aug  3   10:30  /var/lib/docker/tmp/GetImageBlob025163980
 </pre>
 
+----------
+
 #### fsuse ####
 
 Used to fix display of df results and order filesystems from most used to least.

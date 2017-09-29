@@ -14,8 +14,8 @@ function filefinder(){
 </pre>
 
 
+Example:
 <pre>
-Example: 
 [root@cj8dcl102 var]# (find $(pwd) -type f -size +25M -print0 2> /dev/null | xargs -0 ls -lhsS) | column -t | cut -d ' ' -f 2- | sed -e 's/^[ \t]*//'
 -rw-------   1  root  root  401M  Sep  18  03:41  /var/log/messages-20170918
 -rw-------   1  root  root  331M  Sep  24  03:27  /var/log/messages-20170924

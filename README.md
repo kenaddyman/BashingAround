@@ -70,6 +70,13 @@ devtmpfs                        16G   0     16G    0%    /dev
 #### Useful bash functions for your bashrc ####
 
 ```bash
+# Shows what my external IP is.
+function showmyip(){
+  dig +short myip.opendns.com @resolver1.opendns.com
+}
+```
+
+```bash
 # Drops you into the cars user in the sre-docker container
 function sredocker {
   local DOCKERID=$1
@@ -77,6 +84,13 @@ function sredocker {
     DOCKERID=$(docker ps --filter "label=sre-docker" --format "{{.ID}}")
   fi
   docker exec -i -t ${DOCKERID} /home/cars/login.sh
+}
+```
+
+```bash
+# Docker container times drift when sleeping your mac, this will fix that.
+function fixdockertime() {
+  docker run -it --rm --privileged --pid=host debian nsenter -t 1 -m -u -n -i date -u $(date -u +%m%d%H%M%Y)
 }
 ```
 
@@ -96,9 +110,3 @@ function resetgit() {
 }
 ```
 
-```bash
-# Docker container times drift when sleeping your mac, this will fix that.
-function fixdockertime() {
-  docker run -it --rm --privileged --pid=host debian nsenter -t 1 -m -u -n -i date -u $(date -u +%m%d%H%M%Y)
-}
-```

@@ -68,6 +68,7 @@ devtmpfs                        16G   0     16G    0%    /dev
 ----------
 
 **showDeletedFiles**
+
 Used to find deleted files that are still associated with a running WebSphere Java process and list them from largest to smallest. If you are low on file system space but the file system is not showing any large files it might because of a java process holding on to it. Once you restart that java processes it will release that space back to the OS.
 
 ```bash

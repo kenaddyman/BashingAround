@@ -64,3 +64,48 @@ tmpfs                           16G   0     16G    0%    /sys/fs/cgroup
 tmpfs                           16G   0     16G    0%    /dev/shm
 devtmpfs                        16G   0     16G    0%    /dev
 </pre>
+
+----------
+
+#### Useful bash functions for your bashrc ####
+
+```bash
+# Drops you into the cars user in the sre-docker container
+function sredocker {
+  local DOCKERID=$1
+  if [[ ! "${DOCKERID}" ]]; then
+    DOCKERID=$(docker ps --filter "label=sre-docker" --format "{{.ID}}")
+  fi
+  docker exec -i -t ${DOCKERID} /home/cars/login.sh
+}
+```
+
+```bash
+# Used with MaxMind for getting geoip information
+iplook() {
+/Users/kaddyman/working/sre-tools/scripts/maxmind/ip2geo.py -i $1
+}
+```
+
+```bash
+# show commits that are ready to be pushed up
+showpush() {
+  git diff --stat --cached origin/master
+}
+```
+
+```bash
+# reset git repo to last commit, delete any changes made
+function resetgit() {
+  git fetch origin
+  git reset --hard origin/master
+  git clean -fdx
+}
+```
+
+```bash
+# Docker container times drift when sleeping your mac, this will fix that.
+function fixdockertime() {
+  docker run -it --rm --privileged --pid=host debian nsenter -t 1 -m -u -n -i date -u $(date -u +%m%d%H%M%Y)
+}
+```

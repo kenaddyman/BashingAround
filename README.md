@@ -67,6 +67,63 @@ devtmpfs                        16G   0     16G    0%    /dev
 
 ----------
 
+```bash
+# Used to find deleted files that are still associated with a running WebSphere Java process and list them from largest to smallest. If you are low on file system space but the file system is not showing any large files it might because of a java process holding on to it. Once you restart that java processes it will release that space back to the OS.
+function showDeletedFiles {
+  echo
+  (
+  echo "PID JVM FILESIZE FILENAME"
+  (
+  DELETEDFILES=$(/usr/sbin/lsof | grep \(del[e]ted\) | grep j[a]va| awk '{print $2","$7","$9}')
+  JAVAPIDS=$(ps -ef |grep jav[a] | awk '{print $1","$2","$5","$NF}')
+
+  for i in $(echo "${DELETEDFILES}"); do
+
+    PID=$(echo "${i}" | awk -F',' '{print $1}')
+    FILESIZE=$(echo "${i}" | awk -F',' '{print $2}')
+    FILENAME=$(echo "${i}" | awk -F',' '{print $3}')
+
+    if [[ ! "${FILESIZE}" == '0' ]]; then
+      #echo "PID: ${PID} | FILESIZE: ${FILESIZE} | FILENAME: ${FILENAME}"
+
+      for x in $(echo "${JAVAPIDS}"); do
+        USER=$(echo "${x}" | awk -F',' '{print $1}')
+        PSPID=$(echo "${x}" | awk -F',' '{print $2}')
+        RUNAS=$(echo "${x}" | awk -F',' '{print $3}')
+        JVMNAME=$(echo "${x}" | awk -F',' '{print $4}')
+
+        #echo "User: ${USER} | PSPID: ${PSPID} | RUNAS: ${RUNAS} | JVMName: ${JVMNAME}"
+
+        if [[ "${PID}" -eq "${PSPID}" ]]; then
+          echo "${PSPID} ${JVMNAME} ${FILESIZE} ${FILENAME}"
+        fi
+
+      done
+
+    fi
+
+  done ) | sort -k 3 -n -r
+  ) | column -t
+  echo
+}
+```
+
+**Example:**	
+<pre>
+[cars@xxxxxxx ~]$ showDeletedFiles
+
+PID    JVM                   FILESIZE   FILENAME
+14563  Composite_Type1xxx01  789190585  /tmp/spring.log.7
+27746  Composite_Type1xxx01  478772908  /tmp/spring.log.7
+27746  Composite_Type2xxx01  478772908  /tmp/spring.log.7
+19361  Composite_Type1xxx01  130243699  /tmp/spring.log.7
+19361  Composite_Type2xxx01  36581879   /tmp/spring.log.1
+27746  Composite_Type3xxx01  17926023   /tmp/spring.log.7
+...
+</pre>
+
+----------
+
 #### Useful bash functions for your bashrc ####
 
 ```bash

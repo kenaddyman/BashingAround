@@ -81,13 +81,6 @@ function sredocker {
 ```
 
 ```bash
-# Used with MaxMind for getting geoip information
-iplook() {
-/Users/kaddyman/working/sre-tools/scripts/maxmind/ip2geo.py -i $1
-}
-```
-
-```bash
 # show commits that are ready to be pushed up
 showpush() {
   git diff --stat --cached origin/master

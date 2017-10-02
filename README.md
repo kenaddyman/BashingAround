@@ -179,10 +179,11 @@ function resetgit() {
 The quick brown fox jumps over the lazy dog.
 
 **Letter Count: (use sed "$ d" to remove last line if needed)**
-
+```bash
 (for i in $(grep -o . file); do echo ${i}; done;) | tr '[[:upper:]]' '[[:lower:]]' | sed 's/[^a-z]*//g' | sort -f | uniq -ic | sort -rk 1,1
+```
 
 **Word Count:**
-
+```bash
 (for i in $(cat file); do echo ${i}; done;) | tr '[[:upper:]]' '[[:lower:]]' | sed 's/[^a-z]*//g' | sort -f | uniq -ic | sort -rk 1,1
-
+```

@@ -1,6 +1,14 @@
 # BashingAround
 Bash one liners and functions I use.
 
+#### Prompt ####
+
+My PS1 `export PS1='\h \w $(date -u "+%Y-%m-%d %H:%M:%S") $(git branch 2>/dev/null | grep '^*' | colrm 1 2) $ '`
+
+add to `bash_profile` for mac `if [ -f "${HOME}/.bashrc" ]; then source "${HOME}/.bashrc"; fi`.
+
+---
+
 #### filefinder ####
 
 There are many one liners for finding large files on linux systems this is one I put together a while back and use all the time.

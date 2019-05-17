@@ -3,7 +3,7 @@ Bash one liners and functions I use.
 
 #### Prompt ####
 
-My PS1 `export PS1='\h \w $(date -u "+%Y-%m-%d %H:%M:%S") $(git branch 2>/dev/null | grep '^*' | colrm 1 2) $ '`
+My PS1 `export PS1='\e\[\033[0;36m\]\w\e[0m \e\[\033[0;32m\]$(date -u "+%Y-%m-%d %H:%M:%S")\e[0m \e\[\033[0;33m\]$(git branch 2>/dev/null | grep '^*' | colrm 1 2)\e[0m \n $ '`
 
 add to `bash_profile` for mac `if [ -f "${HOME}/.bashrc" ]; then source "${HOME}/.bashrc"; fi`.
 
@@ -119,7 +119,7 @@ function showDeletedFiles {
 }
 ```
 
-**Example:**	
+**Example:**
 <pre>
 [cars@xxxxxxx ~]$ showDeletedFiles
 
@@ -139,42 +139,120 @@ PID    JVM                   FILESIZE   FILENAME
 
 ```bash
 # Shows what my external IP is.
-function showmyip(){
+function myip(){
   dig +short myip.opendns.com @resolver1.opendns.com
 }
 ```
 
-```bash
-# Drops you into the cars user in the sre-docker container
-function sredocker {
-  local DOCKERID=$1
-  if [[ ! "${DOCKERID}" ]]; then
-    DOCKERID=$(docker ps --filter "label=sre-docker" --format "{{.ID}}")
-  fi
-  docker exec -i -t ${DOCKERID} /home/cars/login.sh
-}
-```
-
-```bash
 # Docker container times drift when sleeping your mac, this will fix that.
+```bash
 function fixdockertime() {
   docker run -it --rm --privileged --pid=host debian nsenter -t 1 -m -u -n -i date -u $(date -u +%m%d%H%M%Y)
 }
 ```
 
+# git functions
 ```bash
-# show commits that are ready to be pushed up
-showpush() {
-  git diff --stat --cached origin/master
+function fgit(){
+  # fetch all remote branches
+  git fetch --all
+  git branch -a
 }
-```
 
-```bash
-# reset git repo to last commit, delete any changes made
-function resetgit() {
+function rgit() {
+  # nuke option, will reset your repo like you just rm'd it and cloned it down again
   git fetch origin
   git reset --hard origin/master
   git clean -fdx
+}
+
+function dgit() {
+  # remove all local branches expect for master
+  git branch | grep -v "master" | xargs git branch -D
+}
+
+function sgit() {
+  # show files staged for push
+  git diff --stat --cached origin/master
+}
+
+function mgit() {
+  # used when you want to update your branch with master
+  git merge origin/master
+}
+
+function bgit() {
+  # create a new branch, change to it and push it up
+  # ex. bgit <YOUR_BRANCH_NAME>
+  git branch "${1:-}"
+  git checkout "${1:-}"
+  git push -u origin "${1:-}"
+}
+
+function prgit() {
+  # just run prgit in your branch to open a PR for it
+  if [[ -d "/Applications/Google Chrome.app" ]]; then
+    INSTALLED="Google Chrome"
+  elif [[ -d "/Applications/Firefox.app" ]]; then
+    INSTALLED="firefox"
+  elif [[ -d "/Applications/Safari.app" ]]; then
+    INSTALLED="safari"
+  else
+    INSTALLED="none"
+    printf "You don't have a supported browser (Chrome/Firefox/Safari) installed."
+    exit 1
+  fi
+
+  repo=$(basename $(git rev-parse --show-toplevel))
+  branch=$(git branch | grep \* | cut -d ' ' -f2)
+
+  open -a "${INSTALLED}" "https://github.com/sweetride/${repo}/pull/new/${branch}"
+}
+```
+
+# last grep you will ever need
+
+```bash
+function gf() {
+  grep -iR ''"${1:-}"'' '.'
+}
+```
+
+# set temp aws keys using assumed role
+
+```bash
+function aws-auth(){
+    unset AWS_ACCESS_KEY_ID
+    unset AWS_SECRET_ACCESS_KEY
+    unset AWS_SESSION_TOKEN
+
+    if [[ -z "${AWS_PROFILE:-}" ]]; then
+      echo 'Please set $AWS_PROFILE or AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.' >&2
+      return 1
+    fi
+
+    if aws configure get source_profile &>/dev/null; then
+      local creds source_profile arn
+
+      source_profile="$(aws configure get source_profile)"
+      arn="$(aws configure get role_arn)"
+      creds="$(AWS_PROFILE="$source_profile" aws sts assume-role --role-arn "$arn" --role-session-name "${USER}--terraform" --duration-seconds 900)"
+      echo "${creds}"
+
+      export AWS_ACCESS_KEY_ID="$(echo "$creds" | jq -r .Credentials.AccessKeyId)"
+      export AWS_SECRET_ACCESS_KEY="$(echo "$creds" | jq -r .Credentials.SecretAccessKey)"
+      export AWS_SESSION_TOKEN="$(echo "$creds" | jq -r .Credentials.SessionToken)"
+    fi
+}
+```
+
+# temp file
+
+```bash
+function blah() {
+  junkfile=$(mktemp)
+  vim ${junkfile}
+  rm -rf ${junkfile}
 }
 ```
 
@@ -194,4 +272,50 @@ The quick brown fox jumps over the lazy dog.
 **Word Count:**
 ```bash
 (for i in $(cat file); do echo ${i}; done;) | tr '[[:upper:]]' '[[:lower:]]' | sed 's/[^a-z]*//g' | sort -f | uniq -ic | sort -rk 1,1
+```
+
+# solving coding challenges in bash
+
+```bash
+#!/usr/bin/env bash
+
+# Suppose you are given an array of size 1 to n-length. Write a function that
+# will log to console which values between 1 and n that are NOT in the array.
+# For example - given an array of size 5 containing values [5, 2, 5, 1, 1] your
+# function would print to console "3,4". On the other hand, given an array of
+# size 6 that contained values [6, 3, 4, 1, 2, 5], your function would print nothing ("").
+
+set -oue pipefail
+
+function ohgod_what_i_have_done() {
+  array=$1
+  declare -a dedupsorted
+  declare -a newlist
+
+  IFS=$'\n' sorted=($(echo "${array[@]}" | tr ' ' '\n' | sort -nu))
+
+  for x in "${sorted[@]}"; do
+    dedupsorted+=("${x}")
+  done
+  unset IFS
+
+  last=$(echo "${dedupsorted[-1]}")
+  first=$(echo "${dedupsorted[0]}")
+
+  IFS=$'\n'
+  for i in $(seq ${first} ${last}); do
+    newlist+=("${i}")
+  done
+  unset IFS
+
+  echo ${newlist[@]} ${dedupsorted[@]} | tr ' ' '\n' | sort -n | uniq -u
+}
+
+function main() {
+  if [[ -z "${1:-}" ]]; then echo "example: $0 \"1,12,3,6,17\""; exit 1; fi
+  IFS=', ' read -r -a array <<< "$1"
+  ohgod_what_i_have_done "${array[@]}"
+}
+
+main "$@"
 ```
